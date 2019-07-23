@@ -14,3 +14,6 @@ Everything else is the data files from the movie data set. They have already bee
 3.  See which country of origin contains the most movies
 
 4. Split movies so one set contains movies from 2000 and before and the other is 2000 and after. Take the audience average of them both and do a mann whitney test to see if people like the older movies more or the newer ones
+
+Report document:
+https://docs.google.com/document/d/1RdMiaKG4A44JSZ9jlv8JZft-D5aCYILA5aD_NMBWSRs/edit?usp=sharing
