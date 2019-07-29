@@ -23,8 +23,10 @@ omdb_data = pd.read_json('omdb-data.json.gz', orient='record', lines=True)
 rotten_noNull = rotten_tomato[rotten_tomato['audience_average'].notnull()]
 rotten_noNull = rotten_noNull.dropna()
 
-x1 = np.array(rotten_noNull['critic_average'])
-y1 = np.array(rotten_noNull['audience_average'])
+random = rotten_noNull.sample(n=1000)
+
+x1 = np.array(random['critic_average'])
+y1 = np.array(random['audience_average'])
 
 reg1 = stats.linregress(x1,y1)
 
@@ -105,16 +107,16 @@ year_less_2000_avg = year_less_2000_avg.dropna()
 year_2000_avg = year_2000_avg.dropna()
 
 # MAnn Whitney test requires both data sets to be the same size so I took the first 1000 values
-year_less_2000_avg = year_less_2000_avg.iloc[0:1000]
-year_2000_avg = year_2000_avg.iloc[0:1000]
+year_less_2000_avg2 = year_less_2000_avg.sample(n=1000)
+year_2000_avg2 = year_2000_avg.sample(n=1000)
 
-year_less_2000_avg = year_less_2000_avg.values
-year_2000_avg = year_2000_avg.values
+year_less_2000_avg2 = year_less_2000_avg2.values
+year_2000_avg2 = year_2000_avg2.values
 
-year_less_2000_avg = year_less_2000_avg.ravel()
-year_2000_avg = year_2000_avg.ravel()
+year_less_2000_avg2 = year_less_2000_avg2.ravel()
+year_2000_avg2 = year_2000_avg2.ravel()
 
-print(stats.mannwhitneyu(year_less_2000_avg, year_2000_avg).pvalue) # we get 0.0096 which is < 0.05 so we do not reject null hypothesis and conclude that both data sets have similar averages
+print(stats.mannwhitneyu(year_less_2000_avg2, year_2000_avg2).pvalue) # we get 0.0096 which is < 0.05 so we do not reject null hypothesis and conclude that both data sets have similar averages
 
 
 
