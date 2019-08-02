@@ -2,6 +2,17 @@ import numpy as np
 import pandas as pd
 from sklearn import preprocessing
 
+import sys
+from pyspark.sql import SparkSession, functions, types
+from pyspark.sql.functions import max, first, col
+
+spark = SparkSession.builder.appName('reddit averages').getOrCreate()
+spark.sparkContext.setLogLevel('WARN')
+
+assert sys.version_info >= (3, 5) # make sure we have Python 3.5+
+assert spark.version >= '2.3' # make sure we have Spark 2.3+
+
+
 wikidata = pd.read_json('wikidata-movies.json.gz', orient='record', lines=True, encoding="utf8")
 rotten_tomato = pd.read_json('rotten-tomatoes.json.gz', orient='record', lines=True)
 
@@ -21,17 +32,26 @@ def main():
     cast_members_by_movie = cast_members_by_movie.head(200)
 
 
-    cast_members_by_movie = cast_members_by_movie.cast_member.apply(pd.Series)     .merge(cast_members_by_movie, left_index = True, right_index = True)     .drop(["cast_member"], axis = 1)     .melt(id_vars = ['rotten_tomatoes_id'], value_name = "cast_member")     .drop('variable', axis = 1)     .dropna()
+    cast_members_by_movie = cast_members_by_movie.cast_member.apply(pd.Series).merge(cast_members_by_movie, left_index = True, right_index = True).drop(["cast_member"], axis = 1).melt(id_vars = ['rotten_tomatoes_id'], value_name = "cast_member").drop('variable', axis = 1).dropna()
     cast_members_by_movie = cast_members_by_movie.set_index('rotten_tomatoes_id')
     cast_members_by_movie_with_rating = rotten_tomato.join(cast_members_by_movie)
     cast_members_by_movie_with_rating = cast_members_by_movie_with_rating.dropna()
 
     # Using 26Gb of memory here - could convert to spark job
     categorical_rep_of_cast_in_movies = pd.get_dummies(cast_members_by_movie_with_rating['cast_member'])
-    categorical_rep_of_cast_in_movies.to_csv('dummied_actors.csv') 
+    # categorical_rep_of_cast_in_movies.to_csv('dummied_actors.csv.gz', compression='gzip')
+
 
     # categorical_rep_of_cast_in_movies = categorical_rep_of_cast_in_movies.groupby('rotten_tomatoes_id').any().astype(int)
     # categorical_rep_of_cast_in_movies.to_csv('categorized_actors.csv') 
+    categorical_rep_of_cast_in_movies = spark.createDataFrame(categorical_rep_of_cast_in_movies)
+
+    # https://stackoverflow.com/questions/54779219/how-to-find-the-max-value-of-all-columns-in-a-spark-dataframe
+    columns = categorical_rep_of_cast_in_movies.columns
+    print(columns)
+    df = categorical_rep_of_cast_in_movies.select(*[max(col(c)).alias(c) for c in columns])
+    # df = df[[seq_of_columns]]
+    df.show()
 
 
 if __name__ == "__main__":
